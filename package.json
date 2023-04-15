@@ -1,0 +1,35 @@
+{
+  "name": "mithraeum-banners-scene",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "files": [
+    "dist/**/*",
+    "index.d.ts"
+  ],
+  "main": "./dist/MithraeumBannersScene.umd.cjs",
+  "module": "./dist/MithraeumBannersScene.js",
+  "types": "./index.d.ts",
+  "exports": {
+    "types": "./index.d.ts",
+    "import": "./dist/MithraeumBannersScene.js",
+    "require": "./dist/MithraeumBannersScene.umd.cjs"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build"
+  },
+  "devDependencies": {
+    "typescript": "^4.9.4",
+    "vite": "^4.0.0",
+    "vite-plugin-dts": "^2.1.0"
+  },
+  "dependencies": {
+    "@types/dat.gui": "^0.7.7",
+    "@types/three": "^0.148.0",
+    "ammojs-typed": "^1.0.6",
+    "dat.gui": "^0.7.9",
+    "gsap": "^3.11.4",
+    "three": "^0.148.0"
+  }
+}
