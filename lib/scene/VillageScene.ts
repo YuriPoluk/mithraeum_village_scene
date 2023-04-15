@@ -26,7 +26,7 @@ import AssetLoader from '../utils/AssetLoader'
 import { MODELS, CAMERA_PARAMS, Building, BUILDINGS_LOOKAT_POINTS } from '../constants'
 import ResourceDisposer from '../utils/ResourceDisposer' 
 // import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { createFogPlane } from './CoolCloud'
+import { createFogPlane } from './SDFCloud'
 
 
 type Building = keyof typeof Building
