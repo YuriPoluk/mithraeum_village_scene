@@ -1,5 +1,6 @@
-import { BackSide, Color, Data3DTexture, FrontSide, GLSL3, LinearFilter, Mesh, PerspectiveCamera, RawShaderMaterial, RedFormat, Texture, Vector3 } from "three";
+import { Color, Data3DTexture, FrontSide, GLSL3, LinearFilter, PerspectiveCamera, RawShaderMaterial, RedFormat, Vector2, Vector3 } from "three";
 import { ImprovedNoise } from 'three/examples/jsm/math/ImprovedNoise.js';
+// import * as OpenVDB from 'openvdb/three';
 
 export default class FogMaterial extends RawShaderMaterial {
   constructor(camera: PerspectiveCamera) {    
@@ -19,20 +20,51 @@ export default class FogMaterial extends RawShaderMaterial {
       fragmentShader,
       depthWrite: true,
       depthTest: true,
-			side: FrontSide,
+	  side: FrontSide,
       transparent: true,
     })
 
     this.uniforms.map.value = this.createPseudo3DTexture()
+	// this.importVDB()
   }
 
+//   async importVDB() {
+// 	const vdb = await new Promise(resolve => {
+// 		new OpenVDB.VDBLoader().load('/test_cube.vdb', (vdb:any) => {
+// 		  resolve(vdb);  
+// 		}, null, (err) => {
+// 		  console.error('Could not load the VDB file.', { name, err });
+// 		});
+// 	  });
+
+// 	console.log(vdb)
+
+// 	let grids;
+// 	let source = vdb
+
+//     if (source instanceof Array) {
+//       // NOTE Treat first argument as set of grids
+//       grids = source;
+//     } else if (typeof source.grids !== 'undefined') {
+//       // NOTE Treat first argument as VDB source
+//       grids = Object.values(source.grids);
+//     } else {
+//       // NOTE Hope for the best
+//       grids = [source];
+//     }
+
+//   }
+
   createPseudo3DTexture() {
-    const size = 128 * 2;
+    const size = 128;
 		const data = new Uint8Array( size * size * size )
 		let i = 0;
 		const scale = 0.05 ;
 		const perlin = new ImprovedNoise();
-		const vector = new Vector3();
+		// const vector = new Vector3();
+		// const point = new Vector3(0+ size/2, 0 + size/2, 0 + size/2)
+		const side = size// * 0.4
+
 
     for ( let z = 0; z < size; z ++ ) {
 
@@ -40,9 +72,12 @@ export default class FogMaterial extends RawShaderMaterial {
 
         for ( let x = 0; x < size; x ++ ) {
 
-          const d = 1.0 - vector.set( x, y, z ).subScalar( size / 2 ).divideScalar( size ).length();
-          data[ i ] = ( 128 + 128 * perlin.noise( x * scale / 1.5, y * scale, z * scale / 1.5 ) ) * d * d;
-          i ++;
+			//   const d = 1.0 - vector.set( x, y, z ).subScalar( size / 2 ).divideScalar( size ).length();
+			//   data[ i ] = ( 128 + 128 * perlin.noise( x * scale / 1.5, y * scale, z * scale / 1.5 ) ) * d * d;
+			const isVolume = ( x < side && y < side && z < side ) ? 1 : 0
+			data[ i ] = (128 + 128 * perlin.noise( x * scale / 1.5, y * scale, z * scale / 1.5 )) * isVolume * 0.5;
+			data[ i ] = (128 + 128 * 0.5)
+			i ++;
 
         }
 
@@ -74,8 +109,8 @@ const vertexShader = /* glsl */`
 		vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
 		vOrigin = vec3( inverse( modelMatrix ) * vec4( cameraPos, 1.0 ) ).xyz;
 		vDirection = position - vOrigin;
-    gl_Position = projectionMatrix * mvPosition;
-    vFragDepth = 1.0 + gl_Position.w;
+		gl_Position = projectionMatrix * mvPosition;
+		vFragDepth = 1.0 + gl_Position.w;
 	}
 `;
 
@@ -124,6 +159,8 @@ const fragmentShader = /* glsl */`
 		return vec2( t0, t1 );
 	}
 	float sample1( vec3 p ) {
+		p += vec3(1.5);
+		p = vec3(1) / p;
 		return texture( map, p ).r;
 	}
 	float shading( vec3 coord ) {
@@ -148,10 +185,10 @@ const fragmentShader = /* glsl */`
 		float randNum = randomFloat( seed ) * 2.0 - 1.0;
 		p += rayDir * randNum * ( 1.0 / size );
 		//
-    vec4 ac = vec4( base, 0.0 );
-    float i;
+		vec4 ac = vec4( base, 0.0 );
+		float i;
 		for (float t = bounds.x; t < bounds.y; t += delta ) {
-      i += 1.0;
+      		i += 1.0;
 			float d = sample1( p + 0.5 );
 			d = smoothstep( threshold - range, threshold + range, d ) * opacity;
 			float col = shading( p + 0.5 ) * 3.0 + ( ( p.x + p.y ) * 0.25 ) + 0.2;
@@ -159,17 +196,15 @@ const fragmentShader = /* glsl */`
 			ac.a += ( 1.0 - ac.a ) * d;
 			if ( ac.a >= 0.95 ) break;
 			p += rayDir * delta;
-    }
+    	} 
 
-    color = ac;
-    // color.ra += vec2(0.5);
-    
+		color = ac;
+		color.ra += vec2(0.25);
 
-    if ( color.a == 0.0 ) discard;
+		if ( color.a == 0.0 ) discard;
 
+		float fragDepth = vFragDepth - delta * (i-1.0);
 
-    float fragDepth = vFragDepth - delta * (i-1.0);
-
-    gl_FragDepth = log2( fragDepth ) * logDepthBufFC * 0.5;
+		gl_FragDepth = log2( fragDepth ) * logDepthBufFC * 0.5;
 	}
 `;

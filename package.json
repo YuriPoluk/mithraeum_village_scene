@@ -1,5 +1,5 @@
 {
-  "name": "mithraeum-banners-scene",
+  "name": "mithraeum-village-scene",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -20,6 +20,7 @@
     "build": "tsc && vite build"
   },
   "devDependencies": {
+    "shx": "^0.3.4",
     "typescript": "^4.9.4",
     "vite": "^4.0.0",
     "vite-plugin-dts": "^2.1.0"
@@ -30,6 +31,7 @@
     "ammojs-typed": "^1.0.6",
     "dat.gui": "^0.7.9",
     "gsap": "^3.11.4",
-    "three": "^0.148.0"
+    "openvdb": "^0.2.14",
+    "three": "^0.150.0"
   }
 }
