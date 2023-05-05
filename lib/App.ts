@@ -1,7 +1,6 @@
 import { WebGLRenderer } from 'three'
 import FramesLimiter from './utils/FramesLimiter'
-import VillageScene from './scene/VillageScene'
-
+import VillageScene, { Building, ZoomableBuilding } from './scene/VillageScene'
 const APP_MAX_FPS = 60
 
 export default class MithraeumBannersScene {
@@ -62,12 +61,28 @@ export default class MithraeumBannersScene {
     await this.currentScene.initScene()
   }
 
-  onHoverChange(cb: (b: Building) => void) {
-    this.currentScene.hoverChangeCallback = cb
+  onHoverChange(cb: (b: Building | null) => void) {
+    this.currentScene.hoverChangeExternalCb = cb
   }
 
-  onSelectChange(cb: (b: Building) => void) {
-    this.currentScene.selectChangeCallback = cb
+  onClick(cb: () => void) {
+    this.currentScene.onClickExternalCb = cb
+  }
+
+  hoverBuilding(b: Building, delay: number = 0) {
+    this.currentScene.hoverBuilding(b, delay)
+  }
+
+  unhoverBuilding(b: Building, delay: number = 0) {
+    this.currentScene.unhoverBuilding(b, delay)
+  }
+
+  zoomBuilding(newZoomtarget: ZoomableBuilding | null, currentlyZoomedTo: ZoomableBuilding | null) {
+    this.currentScene.zoomBuilding(newZoomtarget, currentlyZoomedTo)
+  }
+
+  unzoomBuilding(b: ZoomableBuilding | null) {
+    this.currentScene.unzoomBuilding(b)
   }
 
   dispose() {

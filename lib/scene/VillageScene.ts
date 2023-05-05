@@ -31,18 +31,18 @@ import { GUI } from 'dat.gui'
 import gsap from 'gsap'
 
 import AssetLoader from '../utils/AssetLoader'
-import { MODELS, CAMERA_PARAMS, Building, SelectableBuilding } from '../constants'
+import { MODELS, CAMERA_PARAMS, Building, ZoomableBuilding } from '../constants'
 import ResourceDisposer from '../utils/ResourceDisposer'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { createFogPlane } from './SDFCloud'
 import FogMaterial from './VolumetricCloud'
 import { GLTF } from 'three/examples/jsm/loaders/GLTFLoader'
 
-type Building = keyof typeof Building
-type SelectableBuilding = keyof typeof SelectableBuilding
+export type Building = keyof typeof Building
+export type ZoomableBuilding = keyof typeof ZoomableBuilding
 
-function isSelectableBuildingorNull(b: Building | null): b is SelectableBuilding | null {
-  return b == null || Object.keys(SelectableBuilding).includes(b)
+export function isZoomableBuildingorNull(b: Building | null): b is ZoomableBuilding | null {
+  return b == null || Object.keys(ZoomableBuilding).includes(b)
 }
 
 export default class VillageScene {
@@ -64,10 +64,10 @@ export default class VillageScene {
   private animationMixers: Record<string, AnimationMixer> = {}
   private bloomPass!: SelectiveUnrealBloomPass
   private fog!: Mesh
-  private currentSelectedBuilding: SelectableBuilding | null = null
+  private currentSelectedBuilding: ZoomableBuilding | null = null
   private controls!: OrbitControls
-  sceneHoverChangeCallback?: (b: Building) => void
-  selectChangeCallback?: (b: Building) => void
+  hoverChangeExternalCb?: (b: Building | null) => void
+  onClickExternalCb?: () => void
 
   constructor(renderer: WebGLRenderer) {
     this.renderer = renderer
@@ -85,7 +85,8 @@ export default class VillageScene {
   }
 
   onClick() {
-    if (isSelectableBuildingorNull(this.currentHoveredBuilding)) this.selectBuilding(this.currentHoveredBuilding)
+    if (this.onClickExternalCb) this.onClickExternalCb()
+    // if (isSelectableBuildingorNull(this.currentHoveredBuilding)) this.selectBuilding(this.currentHoveredBuilding)
   }
 
   findBuildingByPoint(e: MouseEvent): Building | null {
@@ -124,16 +125,18 @@ export default class VillageScene {
   private currentHoveredBuilding: Building | null = null
 
   checkHover(e: MouseEvent) {
-    if (!this.pointer || this.currentSelectedBuilding) return
+    if (!this.pointer /*|| this.currentSelectedBuilding*/) return
 
-    this.previousHoveredBuilding = this.currentHoveredBuilding
-    this.currentHoveredBuilding = this.findBuildingByPoint(e)
-    if (!this.currentHoveredBuilding && this.previousHoveredBuilding) {
-      this.unhoverBuilding(this.previousHoveredBuilding)
-    } else if (this.currentHoveredBuilding !== this.previousHoveredBuilding) {
-      if (this.previousHoveredBuilding) this.unhoverBuilding(this.previousHoveredBuilding)
-      if (this.currentHoveredBuilding) this.hoverBuilding(this.currentHoveredBuilding)
-    }
+    // this.previousHoveredBuilding = this.currentHoveredBuilding
+    // this.currentHoveredBuilding =
+    const hoveredBuilding = this.findBuildingByPoint(e)
+    if (this.hoverChangeExternalCb) this.hoverChangeExternalCb(hoveredBuilding)
+    // if (!this.currentHoveredBuilding && this.previousHoveredBuilding) {
+    //   this.unhoverBuilding(this.previousHoveredBuilding)
+    // } else if (this.currentHoveredBuilding !== this.previousHoveredBuilding) {
+    //   if (this.previousHoveredBuilding) this.unhoverBuilding(this.previousHoveredBuilding)
+    //   if (this.currentHoveredBuilding) this.hoverBuilding(this.currentHoveredBuilding)
+    // }
   }
 
   hoverBuilding(b: Building, delay: number = 0) {
@@ -166,29 +169,29 @@ export default class VillageScene {
     }
   }
 
-  selectBuilding(b: SelectableBuilding | null) {
-    if (this.currentSelectedBuilding) {
-      this.deselectBuilding()
+  zoomBuilding(newZoomtarget: ZoomableBuilding | null, currentlyZoomedTo: ZoomableBuilding | null) {
+    if (currentlyZoomedTo) {
+      this.unzoomBuilding(currentlyZoomedTo)
       return
     }
 
-    this.currentSelectedBuilding = b
-    const target = this.currentSelectedBuilding || 'default'
+    // this.currentSelectedBuilding = b
+    const target = newZoomtarget || 'default'
     this.animateCameraTo(target)
-    this.unhoverBuilding(this.currentHoveredBuilding!, 0.3)
+    // this.unhoverBuilding(this.currentHoveredBuilding, 0.3)
   }
 
-  deselectBuilding() {
-    if (!this.currentSelectedBuilding) return
+  unzoomBuilding(b: ZoomableBuilding | null) {
+    if (!b) return
 
     this.animateCameraTo('default')
-    this.currentSelectedBuilding = null
-    this.hoverBuilding(this.currentHoveredBuilding!, 0.3)
+    // this.currentSelectedBuilding = null
+    // this.hoverBuilding(this.currentHoveredBuilding!, 0.3)
   }
 
   private cameraAnimations: gsap.core.Tween[] = []
 
-  animateCameraTo(b: SelectableBuilding | 'default') {
+  animateCameraTo(b: ZoomableBuilding | 'default') {
     const cameraParams = CAMERA_PARAMS[b]
     const { quaternion, position, rotationDelay, rotationDuration, translationDelay, translationDuration } = cameraParams
     const defaultDuration = 0.7

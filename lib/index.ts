@@ -1,37 +1,44 @@
 import App from './App'
+import { Building, ZoomableBuilding, isZoomableBuildingorNull } from './scene/VillageScene'
 
 export default App
 
 const canvas = document.querySelector('#app-container') as HTMLCanvasElement
 const app = new App(canvas)
-//@ts-ignore
-window.MITHR_APP = app
+app.init().then(() => {
+  let previousHoveredBuilding: Building | null = null
+  let currentHoveredBuilding: Building | null = null
+  let currentZoomedBuilding: ZoomableBuilding | null = null
 
-app.init()
+  const onHoverChange = (b: Building | null) => {
+    if (currentZoomedBuilding) return
 
-// private previousHoveredBuilding: Building | null = null
-//   private currentHoveredBuilding: Building | null = null
+    previousHoveredBuilding = currentHoveredBuilding
+    currentHoveredBuilding = b
 
-//   checkHover(e: MouseEvent) {
-//     if (!this.pointer || this.currentSelectedBuilding) return
+    if (!currentHoveredBuilding && previousHoveredBuilding) {
+      app.unhoverBuilding(previousHoveredBuilding)
+    } else if (currentHoveredBuilding !== previousHoveredBuilding) {
+      if (previousHoveredBuilding) app.unhoverBuilding(previousHoveredBuilding)
+      if (currentHoveredBuilding) app.hoverBuilding(currentHoveredBuilding)
+    }
+  }
 
-//     this.previousHoveredBuilding = this.currentHoveredBuilding
-//     this.currentHoveredBuilding = this.findBuildingByPoint(e)
-//     if (!this.currentHoveredBuilding && this.previousHoveredBuilding) {
-//       this.unhoverBuilding(this.previousHoveredBuilding)
-//     } else if (this.currentHoveredBuilding !== this.previousHoveredBuilding) {
-//       if (this.previousHoveredBuilding) this.unhoverBuilding(this.previousHoveredBuilding)
-//       if (this.currentHoveredBuilding) this.hoverBuilding(this.currentHoveredBuilding)
-//     }
-//   }
+  const onClick = () => {
+    if (currentZoomedBuilding) {
+      app.unzoomBuilding(currentZoomedBuilding)
+      app.hoverBuilding(currentZoomedBuilding, 0.3)
+      currentHoveredBuilding = currentZoomedBuilding
+      currentZoomedBuilding = null
+    } else if (isZoomableBuildingorNull(currentHoveredBuilding)) {
+      app.zoomBuilding(currentHoveredBuilding, currentZoomedBuilding)
+      currentZoomedBuilding = currentHoveredBuilding
+      if (currentHoveredBuilding) app.unhoverBuilding(currentHoveredBuilding, 0.3)
+    } else {
+      //code for selecting non zoomable buildings (army, siege, battle) probably goes here
+    }
+  }
 
-//   onClick() {
-//     if (isSelectableBuildingorNull(this.currentHoveredBuilding)) this.selectBuilding(this.currentHoveredBuilding)
-//   }
-
-// this.listenerClick = this.onClick.bind(this)
-// addEventListener('pointerdown', this.listenerClick)
-// this.listenerMove = this.checkHover.bind(this)
-// addEventListener('pointermove', this.listenerMove)
-// private currentSelectedBuilding: SelectableBuilding | null = null
-//
+  app.onHoverChange(onHoverChange)
+  app.onClick(onClick)
+})

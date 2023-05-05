@@ -16,7 +16,7 @@ export const MODELS = [
   'back_plane.glb',
 ]
 
-export const SelectableBuilding = {
+export const ZoomableBuilding = {
   barracks: 'barracks',
   farm: 'farm',
   fort: 'fort',
@@ -26,13 +26,13 @@ export const SelectableBuilding = {
   townhall: 'townhall',
 }
 
-export const NonSelectableBuilding = {
+export const NonZoomableBuilding = {
   army: 'army',
   battle: 'battle',
   siege: 'siege',
 }
 
-export const Building = { ...SelectableBuilding, ...NonSelectableBuilding }
+export const Building = { ...ZoomableBuilding, ...NonZoomableBuilding }
 
 interface CameraParam {
   position: Vector3
