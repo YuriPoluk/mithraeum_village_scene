@@ -12,7 +12,6 @@ export const MODELS = [
   'siege.glb',
   'smithy.glb',
   'townhall.glb',
-  'flag_fort_positioning.glb',
   'back_plane.glb',
 ]
 

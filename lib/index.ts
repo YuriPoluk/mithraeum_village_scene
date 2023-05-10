@@ -5,6 +5,9 @@ export default App
 
 const canvas = document.querySelector('#app-container') as HTMLCanvasElement
 const app = new App(canvas)
+//@ts-ignore
+window.MITHR_APP = app
+
 app.init().then(() => {
   let previousHoveredBuilding: Building | null = null
   let currentHoveredBuilding: Building | null = null

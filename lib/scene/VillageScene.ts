@@ -33,6 +33,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { createFogPlane } from './SDFCloud'
 import FogMaterial from './VolumetricCloud'
 import { GLTF } from 'three/examples/jsm/loaders/GLTFLoader'
+import Flag from './Flag'
 
 export type Building = keyof typeof Building
 export type ZoomableBuilding = keyof typeof ZoomableBuilding
@@ -234,13 +235,13 @@ export default class VillageScene {
     this.composer.addPass(this.renderPass)
     this.composer.addPass(this.bloomPass as unknown as Pass)
 
-    const purpleLight1 = new PointLight(0xff3500, 5, 3)
-    purpleLight1.position.set(-0.66, -0.2, 3.953)
-    this.scene.add(purpleLight1)
+    // const purpleLight1 = new PointLight(0xff3500, 5, 3)
+    // purpleLight1.position.set(-0.66, -0.2, 3.953)
+    // this.scene.add(purpleLight1)
 
-    const purpleLight2 = new PointLight(0xff3500, 5, 3)
-    purpleLight2.position.set(1.53, -0.07, 3.146)
-    this.scene.add(purpleLight2)
+    // const purpleLight2 = new PointLight(0xff3500, 5, 3)
+    // purpleLight2.position.set(1.53, -0.07, 3.146)
+    // this.scene.add(purpleLight2)
 
     this.fog = new Mesh(new BoxGeometry(5, 5, 5), new FogMaterial(this.camera))
     this.fog.position.y = 1
@@ -258,6 +259,8 @@ export default class VillageScene {
 
     return asset
   }
+
+  private flags: Flag[] = []
 
   async initObjects() {
     const animations = ['farm.glb', 'lumbermill.glb', 'mine.glb', 'townhall.glb']
@@ -277,19 +280,6 @@ export default class VillageScene {
         }
       })
 
-      if (assetPath == 'flag_fort_positioning.glb') {
-        const flag = scene
-        const mat = (flag.children[0].children[2] as Mesh).material as MeshStandardMaterial
-        const tex = await AssetLoader.loadTextureAsync('/scene/flag.jpg')
-        mat.map = tex
-      }
-
-      if (bloomModels.includes(assetPath)) {
-        scene.traverse((c) => {
-          if (c instanceof Mesh) this.bloomPass.selectedObjects.push(c)
-        })
-      }
-
       if (animations.includes(assetPath)) {
         const mixer = new AnimationMixer(scene)
         const assetName = assetPath.split('.')[0]
@@ -300,6 +290,21 @@ export default class VillageScene {
         })
       }
     }
+
+    const townhallFlag = new Flag()
+    await townhallFlag.init()
+    this.scene.add(townhallFlag)
+    townhallFlag.position.set(-2.25, 2, -2.1)
+    townhallFlag.rotation.y = Math.PI * 0.1
+
+    const fortFlag = new Flag()
+    await fortFlag.init()
+    this.scene.add(fortFlag)
+    fortFlag.position.set(0.4, 0.7, 1.4)
+    fortFlag.rotation.y = -Math.PI * 0.08
+    fortFlag.scale.setScalar(0.8)
+
+    this.flags = [townhallFlag, fortFlag]
 
     const hoverableBuildings = ['barracks', 'farm', 'fort', 'lumbermill', 'mine', 'smithy', 'townhall']
 
@@ -318,6 +323,11 @@ export default class VillageScene {
     this.hoverMeshes[Building.army] = null
     this.hoverMeshes[Building.siege] = null
     this.hoverMeshes[Building.battle] = null
+
+    for (let i = 1; i < 4; i++) {
+      const model = (await AssetLoader.loadModelAsync('/scene/models/bloom_' + i + '.glb')).scene
+      this.scene.add(model)
+    }
 
     const cloud = createFogPlane()
     cloud.position.y = 2
@@ -371,6 +381,10 @@ export default class VillageScene {
     this.camera.fov = 22.9
     this.camera.updateProjectionMatrix()
     this.composer?.setSize(w, h)
+  }
+
+  async setFlagsBone(path: string) {
+    for (const flag of this.flags) await flag.setBone(path)
   }
 
   initGui() {

@@ -85,6 +85,10 @@ export default class MithraeumBannersScene {
     this.currentScene.unzoomBuilding(b)
   }
 
+  async setFlagsBone(path: string) {
+    this.currentScene.setFlagsBone(path)
+  }
+
   dispose() {
     this.invalidated = true
     this.currentScene.dispose()
